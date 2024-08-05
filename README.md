@@ -17,13 +17,6 @@ An implementation of the Game of Life in Python.
 - `Ctrl+V`: Import string from clipboard to glyph buffer.
 - `Ctrl+C`: Copy glyph buffer to clipboard as string.  
 - `Click`: Toggle cell or stamp glyph. (Glyph buffer clears on stamp)
-  
-While Paused:  
-- `S`: Save current board to buffer  
-- `L`: Load board from buffer  
-- `B`: Step backward  
-- `N`: Step forward  
-  
 - `X`: Toggles Box mode  
 Box Mode:  
   - `Num 2/8`: -/+ Box height (Shift for -/+ 10)  
@@ -31,7 +24,15 @@ Box Mode:
   - `F`: Fill box  
   - `E`: Empty box  
   - `Click`: Randomize box  
-  - `Ctrl+C`: Copy box to glyph buffer  
+  - `Ctrl+C`: Copy box to glyph buffer
+
+While Paused:  
+- `S`: Save current board to buffer  
+- `L`: Load board from buffer  
+- `B`: Step backward  
+- `N`: Step forward  
+  
+ 
 
 ## Features
 
