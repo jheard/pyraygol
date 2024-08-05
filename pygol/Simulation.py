@@ -55,7 +55,7 @@ class Simulation():
                 self.paused = not self.paused
                 self.popsTriggered = True
             if not self.updates % self.updateSaveDelay:
-                self.update_lines.append({'count': self.updates, 'alive': len(self.board),'duration': (time() - startTime)*1000:0.2})
+                self.update_lines.append({'count': self.updates, 'alive': len(self.board),'duration': (time() - startTime)*1000})
             self.updates += 1
         if self.current != self.boards.maxlen - 1:
             self.current + 1
