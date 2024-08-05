@@ -5,7 +5,7 @@ An implementation of the Game of Life in Python.
 - `Alive`: Number of alive cells
 - `State`: Current / Length of simulation state buffer
 - `Updates`: Total steps of simulation
-- `Set pops`: The set of the last 2000 populations, useful for cycle detection
+- `Set pops`: The length of the set of the last 2000 populations, useful for cycle detection
 - `Hovercell`: Coords of cell under mouse
 - `R.Box`: The radius during box mode
 - `Glyph`: Glyph name when active
