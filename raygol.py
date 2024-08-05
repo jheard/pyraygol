@@ -5,9 +5,6 @@ from copy import deepcopy
 import pygol.Glyph as Glyph
 import pygol
 from time import time
-from math import floor, sqrt
-from collections import deque
-from functools import partial
 
 BACK_COLOR = rl.Color(18, 75, 18, 255)
 CELL_COLOR = rl.Color(124, 190, 255, 255)
@@ -16,30 +13,19 @@ LINE_COLOR = rl.Color(65, 107, 70, 255)
 
 minmax = lambda a, b, c: min(max(a, b), c)
 
-updates = []
-board = pygol.Board()
-MAX_LEN = 1000
-boards = deque(maxlen=MAX_LEN)
-boards.append(board)
-currBoard = 0
-pops = deque(maxlen=2000)
-popsTriggered = False
-popsTrigger = False
-POP_GATE = 20
+simulation = pygol.Simulation()
 savedBoard = pygol.Board()
 saved = False
-numGlyphs = len(pygol.glyphs)
-activeGlyph = numGlyphs
+activeGlyph = pygol.num_glyphs
 pastedGlyph = None
 pastedString = ""
 
-# Initialization
+
 window = rl.Window((800, 450), "PyGol")
-# Set our game to run at 60 frames-per-second
 window.set_fps(60)
 window.set_state(rl.WindowState.RESIZABLE)
 
-DIM = 20
+CELL_DIM = 20
 
 camera = rl.Camera2D(
     offset=(window.width / 2, window.height / 2),
@@ -55,17 +41,13 @@ rBoxmax = 100
 rBox = rl.Vector2(1, 1)
 
 paused = True
-# Main game loop
-statPrintDelay = 10
-delay = statPrintDelay
-
 dragging = False
 rdragStart = rl.Vector2()
 dragStartPoint = rl.Vector2()
 dragEndPoint = rl.Vector2()
 ldragdelay = 5
 
-updates.append("frames,alive,setpops,time,fps")
+# Main game loop
 while window.is_open():  # Detect window close button or ESC key
     # Update
     startTime = time()
@@ -76,7 +58,7 @@ while window.is_open():  # Detect window close button or ESC key
                 with open(file) as f:
                     fdata = f.read()
                 g = {
-                    "board": board,
+                    "board": simulation.board,
                     "pygol": pygol,
                     
                 }
@@ -106,7 +88,7 @@ while window.is_open():  # Detect window close button or ESC key
         rdragStart = rl.get_mouse_position()
     wheel = rl.get_mouse_wheel_move()
     mouseWorld = camera.get_screen_to_world(rl.get_mouse_position())
-    hovercell = (int(mouseWorld.x // DIM), int(mouseWorld.y // DIM))
+    hovercell = (int(mouseWorld.x // CELL_DIM), int(mouseWorld.y // CELL_DIM))
     if abs(wheel):
         camera.offset = rl.get_mouse_position()
         camera.target = mouseWorld
@@ -116,33 +98,24 @@ while window.is_open():  # Detect window close button or ESC key
         camera.zoom = minmax(0.05, camera.zoom * scaleF, 10)
     if not dragging and rl.is_mouse_button_pressed(rl.MouseButton.LEFT_BUTTON):
         if rBoxMode:
-            board.randomstamp(hovercell, rBox)
+            simulation.board.randomstamp(hovercell, rBox)
         else:
-            hoverCellState = 1 if boards[currBoard].get(hovercell) else 0
-            if activeGlyph == numGlyphs and not pastedGlyph:
-                board[hovercell] = 0 if hoverCellState else 1
+            hoverCellState = 1 if simulation.board.get(hovercell) else 0
+            if activeGlyph == pygol.num_glyphs and not pastedGlyph:
+                simulation.board[hovercell] = 0 if hoverCellState else 1
             elif pastedGlyph:
-                board.stamp(*hovercell, pastedGlyph)
+                simulation.board.stamp(*hovercell, pastedGlyph)
                 pastedGlyph = None
             else:
-                board.stamp(*hovercell, pygol.glyphs[activeGlyph])
+                simulation.board.stamp(*hovercell, pygol.glyphs[activeGlyph])
     k = rl.get_key_pressed()
     match k:
         case rl.Keyboard.R:
-            boards.clear()
-            pops.clear()
-            currBoard = 0
-            updates = []
-            delay = 0
-            board = pygol.Board()
-            boards.append(board)
-            popsTriggered = False
-            popsTrigger = False
-            paused = True
+            simulation.reset()
         case rl.Keyboard.K:
-            activeGlyph = (activeGlyph + 1) % (numGlyphs + 1)
+            activeGlyph = (activeGlyph + 1) % (pygol.num_glyphs + 1)
         case rl.Keyboard.SEMICOLON:
-            activeGlyph = (activeGlyph - 1) % (numGlyphs + 1)
+            activeGlyph = (activeGlyph - 1) % (pygol.num_glyphs + 1)
         case rl.Keyboard.X:
             rBoxMode = not rBoxMode
         case rl.Keyboard.KP_4:
@@ -158,13 +131,14 @@ while window.is_open():  # Detect window close button or ESC key
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
             rBox.y = minmax(rBoxmin, rBox.y - step, rBoxmax)
         case rl.Keyboard.SPACE:
+            simulation.toggle_pause()
             paused = not paused
         case rl.Keyboard.F:
             if rBoxMode:
-                board.setBox(hovercell,rBox,1)
+                simulation.board.setBox(hovercell,rBox,1)
         case rl.Keyboard.E:
             if rBoxMode:
-                board.setBox(hovercell,rBox,0)
+                simulation.board.setBox(hovercell,rBox,0)
         case rl.Keyboard.V:
             if rl.is_key_down(rl.Keyboard.LEFT_CONTROL) or rl.is_key_down(rl.Keyboard.RIGHT_CONTROL):
                 pastedGlyph = Glyph.from_str(window.clipboard_text)
@@ -175,50 +149,22 @@ while window.is_open():  # Detect window close button or ESC key
                 if (pastedGlyph and pastedGlyph.name == "Copied"):
                     window.clipboard_text = str(pastedGlyph)
                 else:
-                    code_string = boards[currBoard].to_glyph(hovercell,rBox)
+                    code_string = simulation.board.to_glyph(hovercell,rBox)
                     code_string = Glyph.rle(code_string)
                     dims = rBox * 2 + 1
                     pastedGlyph = Glyph("Copied",*dims,code_string)
                     print(pastedGlyph)
     if paused:
         if k == rl.Keyboard.N:
-            if currBoard == len(boards) - 1:
-                board = board.advance()
-                boards.append(board)
-                pops.append(len(board))
-                if (popsTrigger and len(set(pops)) <= pops.maxlen//POP_GATE and len(pops) == pops.maxlen):
-                    paused = not paused
-                    popsTriggered = True
-                if not delay % statPrintDelay:
-                    updates.append(
-                        f"{delay},{len(boards[currBoard])},{(time() - startTime)*1000:0.2f},{window.get_fps()}"
-                    )
-                delay += 1
-            currBoard = currBoard if currBoard == MAX_LEN - 1 else currBoard + 1
-            board = boards[currBoard]
-        if k == rl.Keyboard.B and currBoard > 0:
-            currBoard -= 1
-            board = boards[currBoard]
+            simulation.advance()
+        if k == rl.Keyboard.B:
+           simulation.step_back()
         if k == rl.Keyboard.S:
-            savedBoard = deepcopy(boards[currBoard])
+            savedBoard = deepcopy(simulation.board)
         if k == rl.Keyboard.L:
-            board = deepcopy(savedBoard)
-            boards[currBoard] = board
-            
-    elif not popsTriggered:
-        if currBoard == len(boards) - 1:
-            board = board.advance()
-            boards.append(board)
-        currBoard = currBoard if currBoard == MAX_LEN - 1 else currBoard + 1
-        pops.append(len(board))
-        if (popsTrigger and len(set(pops)) <= (pops.maxlen // POP_GATE) and len(pops) == pops.maxlen):
-            paused = not paused
-            popsTriggered = True
-        if not delay % statPrintDelay:
-            updates.append(
-                f"{delay},{len(boards[currBoard])},{len(set(pops))},{(time() - startTime)*1000:0.2f},{window.get_fps()}"
-            )
-        delay += 1
+            simulation.board = deepcopy(savedBoard)
+    else:
+        simulation.advance()
     
     
     window.begin_drawing()
@@ -227,31 +173,31 @@ while window.is_open():  # Detect window close button or ESC key
     world_tl = camera.get_screen_to_world((0, 0))
     world_br = camera.get_screen_to_world(window.size)
     shadows = 0
-    if shadows and len(boards) > shadows:
+    if shadows and len(simulation.boards) > shadows:
         for i in range(shadows):
-            for cell in boards[currBoard-shadows+i].aliveCells():
-                rl.draw_rectangle_v(rl.Vector2(*cell) * DIM, (DIM, DIM), CELL_COLOR.fade(i/shadows))
+            for cell in simulation.boards[simulation.current-shadows+i].aliveCells():
+                rl.draw_rectangle_v(rl.Vector2(*cell) * CELL_DIM, (CELL_DIM, CELL_DIM), CELL_COLOR.fade(i/shadows))
     else:
-        for cell in board.aliveCells():
-            rl.draw_rectangle_v(rl.Vector2(*cell) * DIM, (DIM, DIM), CELL_COLOR)
+        for cell in simulation.board.aliveCells():
+            rl.draw_rectangle_v(rl.Vector2(*cell) * CELL_DIM, (CELL_DIM, CELL_DIM), CELL_COLOR)
     #for i in range( int(world_tl.x-DIM)//DIM*DIM, int(world_br.x+DIM)//DIM*DIM, DIM):
     #    rl.draw_line((float(i),world_tl.y-DIM),(float(i),world_br.y+DIM),LINE_COLOR,sqrt(camera.zoom)/5)
     #for i in range(int(world_tl.y-DIM)//DIM*DIM,int(world_br.y+DIM)//DIM*DIM,DIM):
     #    rl.draw_line((world_tl.x-DIM,float(i)),(world_br.x+DIM,float(i)),LINE_COLOR,sqrt(camera.zoom)/5)
     if rBoxMode:
-        rBoxtl = (rl.Vector2(*hovercell) + 1 + rBox) * DIM
-        rBoxbr = (rl.Vector2(*hovercell) - rBox) * DIM
+        rBoxtl = (rl.Vector2(*hovercell) + 1 + rBox) * CELL_DIM
+        rBoxbr = (rl.Vector2(*hovercell) - rBox) * CELL_DIM
         thickness = camera.zoom
-        rl.draw_rectangle_v(rBoxbr, (rBox * 2 + 1) * DIM, GHOST_COLOR)
-    elif not pastedGlyph and activeGlyph == numGlyphs:
-        tl = rl.Vector2(*hovercell) * DIM
-        rl.draw_rectangle_v(tl, (DIM,DIM), GHOST_COLOR)
+        rl.draw_rectangle_v(rBoxbr, (rBox * 2 + 1) * CELL_DIM, GHOST_COLOR)
+    elif not pastedGlyph and activeGlyph == pygol.num_glyphs:
+        tl = rl.Vector2(*hovercell) * CELL_DIM
+        rl.draw_rectangle_v(tl, (CELL_DIM,CELL_DIM), GHOST_COLOR)
     elif pastedGlyph:
         for cell, state in pastedGlyph.parseglyph(*hovercell):
-            rl.draw_rectangle_v(rl.Vector2(*cell) * DIM, (DIM, DIM), GHOST_COLOR)
+            rl.draw_rectangle_v(rl.Vector2(*cell) * CELL_DIM, (CELL_DIM, CELL_DIM), GHOST_COLOR)
     else:
         for cell, state in pygol.glyphs[activeGlyph].parseglyph(*hovercell):
-            rl.draw_rectangle_v(rl.Vector2(*cell) * DIM, (DIM, DIM), GHOST_COLOR)
+            rl.draw_rectangle_v(rl.Vector2(*cell) * CELL_DIM, (CELL_DIM, CELL_DIM), GHOST_COLOR)
     camera.end_mode()
     text_spacing = 30
     y = 20
@@ -261,15 +207,15 @@ while window.is_open():  # Detect window close button or ESC key
         rl.draw_rectangle(window.width - 60, 20, 15, 40, rl.RED)
         rl.draw_rectangle(window.width - 40, 20, 15, 40, rl.RED)
     s = f"""\
-Alive: {len(list(filter(None,board.values())))}\n\
-State: {currBoard+1:3}/{len(boards)}\n\
-Updates: {delay}\n\
-Set Pops: {len(set(pops))}\n\
+Alive: {len(list(filter(None,simulation.board.values())))}\n\
+State: {simulation.current+1:3}/{len(simulation.boards)}\n\
+Updates: {simulation.updates}\n\
+Set Pops: {len(set(simulation.pops))}\n\
 HoverCell: {hovercell}\n\
 """
     if rBoxMode:
         s += f"Box: ({int(rBox.x)*2+1}, {int(rBox.y)*2+1})\n"
-    if activeGlyph != numGlyphs:
+    if activeGlyph != pygol.num_glyphs:
         s += f"Glyph: {pygol.glyphs[activeGlyph].name}\n"
     rl.draw_text(s, 20, y, 20, (48, 255, 48, 255))
     window.end_drawing()
