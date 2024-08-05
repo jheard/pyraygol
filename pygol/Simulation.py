@@ -51,10 +51,8 @@ class Simulation():
         self.paused = True
     
     def advance(self) -> None:
-        """Fast-forward current or simulation the next step"""
+        """Fast-forward current or simulate the next step"""
         if self.popsTriggered:
-            return
-        if self.paused:
             return
         if self.current == len(self.boards) - 1:
             startTime = time()

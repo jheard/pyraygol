@@ -11,10 +11,10 @@ CELL_COLOR = rl.Color(124, 190, 255, 255)
 GHOST_COLOR = rl.Color(124, 175, 227, 127)
 LINE_COLOR = rl.Color(65, 107, 70, 255)
 
-minmax = lambda a, b, c: min(max(a, b), c)
+clamp = lambda a, b, c: min(max(a, b), c)
 
-simulation = pygol.Simulation()
-savedBoard = pygol.Board()
+simulation: pygol.Simulation = pygol.Simulation()
+savedBoard: pygol.Board = pygol.Board()
 saved = False
 activeGlyph = pygol.num_glyphs
 pastedGlyph = None
@@ -95,7 +95,7 @@ while window.is_open():  # Detect window close button or ESC key
         scaleF = 1.0 + (0.25 * abs(wheel))
         if wheel < 0:
             scaleF = 1.0 / scaleF
-        camera.zoom = minmax(0.05, camera.zoom * scaleF, 10)
+        camera.zoom = clamp(0.05, camera.zoom * scaleF, 10)
     if not dragging and rl.is_mouse_button_pressed(rl.MouseButton.LEFT_BUTTON):
         if rBoxMode:
             simulation.board.randomstamp(hovercell, rBox)
@@ -112,6 +112,7 @@ while window.is_open():  # Detect window close button or ESC key
     match k:
         case rl.Keyboard.R:
             simulation.reset()
+            paused = True
         case rl.Keyboard.K:
             activeGlyph = (activeGlyph + 1) % (pygol.num_glyphs + 1)
         case rl.Keyboard.SEMICOLON:
@@ -120,16 +121,16 @@ while window.is_open():  # Detect window close button or ESC key
             rBoxMode = not rBoxMode
         case rl.Keyboard.KP_4:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox[0] = minmax(rBoxmin, rBox[0] - step, rBoxmax)
+            rBox[0] = clamp(rBoxmin, rBox[0] - step, rBoxmax)
         case rl.Keyboard.KP_8:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox[1] = minmax(rBoxmin, rBox[1] + step, rBoxmax)
+            rBox[1] = clamp(rBoxmin, rBox[1] + step, rBoxmax)
         case rl.Keyboard.KP_6:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox[0] = minmax(rBoxmin, rBox[0] + step, rBoxmax)
+            rBox[0] = clamp(rBoxmin, rBox[0] + step, rBoxmax)
         case rl.Keyboard.KP_2:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox[1] = minmax(rBoxmin, rBox[1] - step, rBoxmax)
+            rBox[1] = clamp(rBoxmin, rBox[1] - step, rBoxmax)
         case rl.Keyboard.SPACE:
             simulation.toggle_pause()
             paused = not paused

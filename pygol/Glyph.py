@@ -36,7 +36,7 @@ class Glyph():
         if not s:
             return ""
 
-        s = re.sub(r"\$(b*)\$", '$$', s.lower())
+        s = re.sub(r"\$(b*?)\$", '$$', s.lower())
         encoded = []
         count = 1
         previous = s[0]

@@ -40,12 +40,12 @@ class Board(dict):
                 return True
         return False
     
-    def _iter_box(self, cell: Cell, rBox: list[int]) -> Iterator[tuple[Cell, bool]]:
+    def _iter_box(self, cell: Cell, rBox: list[int]) -> Iterator[tuple[bool, Cell]]:
         """Generate a list of cells within the radius of rBox"""
         endl = False
         for y in range(int(cell[1] - rBox[1]), int(cell[1] + rBox[1] + 1)):
-            for x in range(int(cell[0]- rBox[0]), int(cell[0] + rBox[0] + 1)):
-                yield (x,y), endl
+            for x in range(int(cell[0] - rBox[0]), int(cell[0] + rBox[0] + 1)):
+                yield endl, (x,y)
                 endl = False
             endl = True
 
@@ -56,20 +56,20 @@ class Board(dict):
 
     def randomstamp(self, cell: Cell, rBox: list[int]) -> None:
         """Stamp cells within radius of rBox randomly"""
-        for c,_ in self._iter_box(cell,rBox):
-                if random.choice([0, 1]):
-                    self[c] = 1    
+        for _,c in self._iter_box(cell,rBox):
+            if random.choice([0, 1]):
+                self[c] = 1    
         
     def setBox(self, cell:Cell, rBox: list[int], state: State) -> None:
         """Set the state of cells within radius of rBox"""
-        for c,_ in self._iter_box(cell,rBox):
+        for _,c in self._iter_box(cell,rBox):
             self[c] = state
     
-    def to_glyph(self,cell: Cell,rBox: list[int]) -> str:
+    def to_glyph(self, cell: Cell, rBox: list[int]) -> str:
         """Generate glyphstring for cells within radius of rBox"""
         codestr = ""
-        for c,endl in self._iter_box(cell,rBox):
-            state = 'o' if self.get(c,0) else 'b'
+        for endl, c in self._iter_box(cell,rBox):
+            state = 'o' if self.get(c,0) == 1 else 'b'
             if endl:
                 codestr += "$"
             codestr += state
