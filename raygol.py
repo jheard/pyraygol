@@ -2,7 +2,7 @@ import pyraylib as rl
 from pyraylib.colors import LIGHTGRAY, GREEN, RAYWHITE
 
 from copy import deepcopy
-import pygol.Glyph as Glyph
+from pygol import Glyph
 import pygol
 from time import time
 
@@ -120,16 +120,16 @@ while window.is_open():  # Detect window close button or ESC key
             rBoxMode = not rBoxMode
         case rl.Keyboard.KP_4:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox.x = minmax(rBoxmin, rBox.x - step, rBoxmax)
+            rBox[0] = minmax(rBoxmin, rBox[0] - step, rBoxmax)
         case rl.Keyboard.KP_8:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox.y = minmax(rBoxmin, rBox.y + step, rBoxmax)
+            rBox[1] = minmax(rBoxmin, rBox[1] + step, rBoxmax)
         case rl.Keyboard.KP_6:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox.x = minmax(rBoxmin, rBox.x + step, rBoxmax)
+            rBox[0] = minmax(rBoxmin, rBox[0] + step, rBoxmax)
         case rl.Keyboard.KP_2:
             step = 10 if rl.is_key_down(rl.Keyboard.LEFT_SHIFT) else 1
-            rBox.y = minmax(rBoxmin, rBox.y - step, rBoxmax)
+            rBox[1] = minmax(rBoxmin, rBox[1] - step, rBoxmax)
         case rl.Keyboard.SPACE:
             simulation.toggle_pause()
             paused = not paused
@@ -150,7 +150,7 @@ while window.is_open():  # Detect window close button or ESC key
                     window.clipboard_text = str(pastedGlyph)
                 else:
                     code_string = simulation.board.to_glyph(hovercell,rBox)
-                    code_string = Glyph.rle(code_string)
+                    code_string = Glyph.rle(code_string)                   
                     dims = rBox * 2 + 1
                     pastedGlyph = Glyph("Copied",*dims,code_string)
                     print(pastedGlyph)

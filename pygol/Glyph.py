@@ -1,34 +1,42 @@
 import re
 import enum
+from typing import Iterator
+
+from .Board import Cell, State
 
 #x = 15, y = 6, rule = B3/S23
 #bo11b2o$obo4bo6bo$7bo4bo$2bo2bo3bo2bo$2b2o6bo$3bo!
 #Glyph from LifeWiki clipboard https://conwaylife.com/wiki/LifeViewer
 
 class GlyphFlip(enum.Enum):
+    """Enum for tracking state of a glyph"""
     NORMAL = enum.auto()
     HORIZONTAL = enum.auto()
     VERTICAL = enum.auto()
+    BOTH = enum.auto()
     TRANSPOSE = enum.auto()
 
 class Glyph():
-    code_pattern = r"(\d*?[bo])(\d?\$)?"
+    """A pattern from the Game of Life"""
+
+    code_pattern = r"(\d*?[bBoO])(\d?\$)?"
     clip_pattern = r"x = (\d*), y = (\d*), rule = ([Bb]\d*/[Ss]\d*)"
 
-    def __init__(self, name, x, y, code, rule="B3/S23", flip=GlyphFlip.NORMAL):
-        self.name = name
-        self.x = x
-        self.y = y
-        self.rule = rule
-        self.code = code
-        self.flip = flip
+    def __init__(self, name: str, x: int, y:int, code:str, rule:str="B3/S23", flip:GlyphFlip=GlyphFlip.NORMAL) -> None:
+        self.name: str = name
+        self.x: int = x
+        self.y: int = y
+        self.rule: str = rule
+        self.code: str = code
+        self.flip: GlyphFlip = flip
 
     @classmethod
-    def rle(self,s):
+    def rle(cls,s:str) -> str:
+        """Run-length encode a glyph string"""
         if not s:
             return ""
 
-        s = re.sub(r"(?:\$)(b*)(?:\$)", '$$', s)
+        s = re.sub(r"\$(b*)\$", '$$', s.lower())
         encoded = []
         count = 1
         previous = s[0]
@@ -51,23 +59,22 @@ class Glyph():
         return ''.join(encoded)
 
     @classmethod
-    def from_str(self, s):
+    def from_str(cls, s: str) -> 'Glyph | None':
         _, *code = s.splitlines()
-        try:
-            groups = re.match(self.clip_pattern, s,re.MULTILINE).groups()
-        except AttributeError:
-            print("Unable to parse header!")
+        matches = re.match(cls.clip_pattern, s,re.MULTILINE)
+        if not matches:
             return None
-        x, y, rule = groups
+        x, y, rule = matches.groups()
         return Glyph("Pasted Glyph",int(x),int(y),''.join(code),rule)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"x = {int(self.x)}, y = {int(self.y)}, rule = {self.rule}\n{self.code}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Glyph({self.name!r},{self.x!r},{self.y!r},{self.code!r},{self.rule!r})"
 
-    def parseglyph(self, starti, startj):
+    def parseglyph(self, starti: int, startj:int) -> Iterator[tuple[Cell,State]]:
+        """Parse the code string and generate a list of alive cells"""
         i = starti
         j = startj
         for section, endl in re.findall(self.code_pattern, self.code):
