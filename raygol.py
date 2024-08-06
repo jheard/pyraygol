@@ -1,10 +1,10 @@
+from copy import deepcopy
+from time import time
+
 import pyraylib as rl
 from pyraylib.colors import LIGHTGRAY, GREEN, RAYWHITE
 
-from copy import deepcopy
-from pygol import Glyph
 import pygol
-from time import time
 
 BACK_COLOR = rl.Color(18, 75, 18, 255)
 CELL_COLOR = rl.Color(124, 190, 255, 255)
@@ -142,7 +142,7 @@ while window.is_open():  # Detect window close button or ESC key
                 simulation.board.setBox(hovercell,rBox,0)
         case rl.Keyboard.V:
             if rl.is_key_down(rl.Keyboard.LEFT_CONTROL) or rl.is_key_down(rl.Keyboard.RIGHT_CONTROL):
-                pastedGlyph = Glyph.from_str(window.clipboard_text)
+                pastedGlyph = pygol.Glyph.from_str(window.clipboard_text)
                 pastedString = window.clipboard_text
                 print(pastedGlyph)
         case rl.Keyboard.C:
@@ -151,9 +151,9 @@ while window.is_open():  # Detect window close button or ESC key
                     window.clipboard_text = str(pastedGlyph)
                 else:
                     code_string = simulation.board.to_glyph(hovercell,rBox)
-                    code_string = Glyph.rle(code_string)                   
+                    code_string = pygol.Glyph.rle(code_string)                   
                     dims = rBox * 2 + 1
-                    pastedGlyph = Glyph("Copied",*dims,code_string)
+                    pastedGlyph = pygol.Glyph("Copied",*dims,code_string)
         case rl.Keyboard.S:
             if ((rl.is_key_down(rl.Keyboard.LEFT_CONTROL) or rl.is_key_down(rl.Keyboard.RIGHT_CONTROL)) and pastedGlyph):
                 pygol.glyphs.append(pastedGlyph)

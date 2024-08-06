@@ -1,7 +1,6 @@
-from copy import copy
+from typing import Iterator
 import random
 import re
-from typing import Iterator
 
 type Cell = tuple[int,int]
 type State = int

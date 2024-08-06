@@ -1,5 +1,5 @@
-from .Glyph import Glyph, GlyphFlip
 from .Board import Board
+from .Glyph import Glyph, GlyphFlip
 from .Simulation import Simulation
 
 glyphs = []

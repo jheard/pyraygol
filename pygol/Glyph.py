@@ -1,7 +1,7 @@
 from copy import copy
-import re
-import enum
 from typing import Iterator
+import enum
+import re
 
 from .Board import Cell, State
 
