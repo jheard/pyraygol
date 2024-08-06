@@ -1,3 +1,4 @@
+from copy import copy
 import random
 import re
 from typing import Iterator
@@ -43,8 +44,8 @@ class Board(dict):
     def _iter_box(self, cell: Cell, rBox: list[int]) -> Iterator[tuple[bool, Cell]]:
         """Generate a list of cells within the radius of rBox"""
         endl = False
-        for y in range(int(cell[1] - rBox[1]), int(cell[1] + rBox[1] + 1)):
-            for x in range(int(cell[0] - rBox[0]), int(cell[0] + rBox[0] + 1)):
+        for y in range(int(cell[1] - rBox[1]), int(cell[1] + rBox[1])+1):
+            for x in range(int(cell[0] - rBox[0]), int(cell[0] + rBox[0])+1):
                 yield endl, (x,y)
                 endl = False
             endl = True
@@ -69,10 +70,10 @@ class Board(dict):
         """Generate glyphstring for cells within radius of rBox"""
         codestr = ""
         for endl, c in self._iter_box(cell,rBox):
-            state = 'o' if self.get(c,0) == 1 else 'b'
             if endl:
                 codestr += "$"
-            codestr += state
+            state = self.get(c,0)
+            codestr += 'o' if state else 'b'
         return codestr
     
     def advance(self) -> 'Board':
