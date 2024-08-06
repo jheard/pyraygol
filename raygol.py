@@ -188,7 +188,6 @@ while window.is_open():  # Detect window close button or ESC key
     if rBoxMode:
         rBoxtl = (rl.Vector2(*hovercell) + 1 + rBox) * CELL_DIM
         rBoxbr = (rl.Vector2(*hovercell) - rBox) * CELL_DIM
-        thickness = camera.zoom
         rl.draw_rectangle_v(rBoxbr, (rBox * 2 + 1) * CELL_DIM, GHOST_COLOR)
     elif not pastedGlyph and activeGlyph == pygol.num_glyphs:
         tl = rl.Vector2(*hovercell) * CELL_DIM
