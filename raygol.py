@@ -147,14 +147,23 @@ while window.is_open():  # Detect window close button or ESC key
                 print(pastedGlyph)
         case rl.Keyboard.C:
             if (rl.is_key_down(rl.Keyboard.LEFT_CONTROL) or rl.is_key_down(rl.Keyboard.RIGHT_CONTROL)):
-                if (pastedGlyph and pastedGlyph.name == "Copied"):
+                if (pastedGlyph):
                     window.clipboard_text = str(pastedGlyph)
                 else:
                     code_string = simulation.board.to_glyph(hovercell,rBox)
                     code_string = Glyph.rle(code_string)                   
                     dims = rBox * 2 + 1
                     pastedGlyph = Glyph("Copied",*dims,code_string)
-                    print(pastedGlyph)
+        case rl.Keyboard.S:
+            if ((rl.is_key_down(rl.Keyboard.LEFT_CONTROL) or rl.is_key_down(rl.Keyboard.RIGHT_CONTROL)) and pastedGlyph):
+                pygol.glyphs.append(pastedGlyph)
+                pygol.num_glyphs += 1
+        case rl.Keyboard.COMMA:
+            pygol.glyphs[activeGlyph].flip ^= pygol.GlyphFlip.HORIZONTAL
+        case rl.Keyboard.PERIOD:
+            pygol.glyphs[activeGlyph].flip ^= pygol.GlyphFlip.VERTICAL
+        case rl.Keyboard.SLASH:
+            pygol.glyphs[activeGlyph].flip ^= pygol.GlyphFlip.TRANSPOSE
     if paused:
         if k == rl.Keyboard.N:
             simulation.advance()
@@ -217,6 +226,8 @@ HoverCell: {hovercell}\n\
         s += f"Box: ({int(rBox.x)*2+1}, {int(rBox.y)*2+1})\n"
     if activeGlyph != pygol.num_glyphs:
         s += f"Glyph: {pygol.glyphs[activeGlyph].name}\n"
+    elif pastedGlyph:
+        s += f"Glyph: {pastedGlyph.name}\n"
     rl.draw_text(s, 20, y, 20, (48, 255, 48, 255))
     window.end_drawing()
 
